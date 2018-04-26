@@ -2,9 +2,9 @@
   "name": "datamagic",
   "version": "1.0.0",
   "description": "数据爬虫+可视化+AI",
-  "main": "index.js",
+  "main": "main.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "electron ."
   },
   "repository": {
     "type": "git",
@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/zhyuzh3d/dataMagic/issues"
   },
-  "homepage": "https://github.com/zhyuzh3d/dataMagic#readme"
+  "homepage": "https://github.com/zhyuzh3d/dataMagic#readme",
+  "devDependencies": {
+    "electron": "^1.8.4"
+  }
 }
