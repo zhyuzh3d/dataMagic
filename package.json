@@ -1,0 +1,19 @@
+{
+  "name": "datamagic",
+  "version": "1.0.0",
+  "description": "数据爬虫+可视化+AI",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://zhyuzh3d@hotmail.com:tianyurubydi3d@github.com/zhyuzh3d/dataMagic.git"
+  },
+  "author": "zhyuzh",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/zhyuzh3d/dataMagic/issues"
+  },
+  "homepage": "https://github.com/zhyuzh3d/dataMagic#readme"
+}
