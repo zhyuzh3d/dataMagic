@@ -4,7 +4,10 @@
   "description": "数据爬虫+可视化+AI",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "electron": "electron .",
+    "start": "webpack --config webpack.config.js",
+    "dev": "webpack-dev-server",
+    "build": "webpack"
   },
   "repository": {
     "type": "git",
@@ -17,6 +20,9 @@
   },
   "homepage": "https://github.com/zhyuzh3d/dataMagic#readme",
   "devDependencies": {
-    "electron": "^1.8.4"
+    "electron": "^1.8.4",
+    "webpack": "^4.6.0",
+    "webpack-cli": "^2.0.15",
+    "webpack-dev-server": "^3.1.3"
   }
 }

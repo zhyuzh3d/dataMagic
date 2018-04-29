@@ -18,8 +18,10 @@ function createWindow() {
 
     // 然后加载应用的 index.html。
     win.loadURL(url.format({
-        pathname: path.join(__dirname, 'index.html'),
-        protocol: 'file:',
+        //pathname: path.join(__dirname, 'dist/index.html'),
+        //protocol: 'file:',
+        pathname: ('localhost:9000'),
+        protocol: 'http:',
         slashes: true
     }))
 
