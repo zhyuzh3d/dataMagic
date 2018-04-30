@@ -1,1 +1,7 @@
-document.write('<h2>Hello webpack!</h2>')
+import React from 'react'
+import ReactDOM from 'react-dom'
+import h from 'react-hyperscript'
+
+import App from './App/App'
+
+ReactDOM.render(h(App), document.getElementById('root'))

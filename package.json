@@ -20,7 +20,12 @@
   },
   "homepage": "https://github.com/zhyuzh3d/dataMagic#readme",
   "devDependencies": {
+    "@material-ui/icons": "^1.0.0-beta.43",
     "electron": "^1.8.4",
+    "material-ui": "^1.0.0-beta.43",
+    "react": "^16.3.2",
+    "react-dom": "^16.3.2",
+    "react-hyperscript": "^3.2.0",
     "webpack": "^4.6.0",
     "webpack-cli": "^2.0.15",
     "webpack-dev-server": "^3.1.3"
