@@ -9,7 +9,7 @@ class Page extends Component {
     constructor(props) {
         super(props)
         this.state = {
-            title: 'WelcomePage',
+            title: 'HomePage',
         }
     }
 
@@ -20,11 +20,11 @@ class Page extends Component {
                 color: 'primary',
                 variant: 'raised',
                 onClick: () => {
-                    global.XRouter.changePage('HomePage', {
+                    global.XRouter.changePage('WelcomePage', {
                         randNumber:Math.random(),
                     })
                 },
-            }, 'go home')
+            }, 'go welcome')
         ])
     }
 }
