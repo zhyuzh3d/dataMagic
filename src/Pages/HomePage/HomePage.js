@@ -25,9 +25,6 @@ class Page extends Component {
                 name: 'rocket',
                 color: 'red'
             }),
-            h('img', {
-                src: 'icons/11.png'
-            }),
             h(Button, {
                 color: 'primary',
                 variant: 'raised',
