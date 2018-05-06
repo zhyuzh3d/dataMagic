@@ -18,6 +18,8 @@ import Theme from './_theme'
 import Config from './_config'
 
 import XRouter from '../Utilities/XRouter'
+import MyDialog from '../Utilities/MyDialog'
+import MySnackbar from '../Utilities/MySnackbars'
 
 global.XRouter = XRouter //输出到全局
 
@@ -50,7 +52,8 @@ class App extends Component {
             className: css.app,
         }, [
             h(Pages[this.state.currentPageName]),
-            h('h5', this.state.randNumber)
+            h(MyDialog),
+            h(MySnackbar),
         ]))
     }
 }

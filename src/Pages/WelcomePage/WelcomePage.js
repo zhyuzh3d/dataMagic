@@ -38,8 +38,4 @@ class Page extends Component {
     }
 }
 
-Page.constructor = (props) => {
-    Page.constructor(props)
-
-}
 export default Page

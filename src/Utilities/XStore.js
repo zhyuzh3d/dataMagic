@@ -6,7 +6,7 @@
 清理store('key')或store('key',null)；
 设空子属性store('key',{'subkey':null})；
 */
-import merge from 'deepmerge';
+import merge from 'deepmerge'
 const store = (targetKey, objOrKey) => {
     let lsdata, res
 

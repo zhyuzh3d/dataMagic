@@ -1,4 +1,6 @@
 import h from 'react-hyperscript'
+import PropTypes from 'prop-types'
+
 import SvgIcon from 'material-ui/SvgIcon'
 
 const icon = (iconName, props) => {
