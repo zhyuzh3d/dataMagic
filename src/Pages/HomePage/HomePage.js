@@ -65,8 +65,6 @@ class Page extends Component {
             }, 'add snackbar'),
 
 
-
-
             h('div'),
             h(Button, {
                 color: 'primary',
