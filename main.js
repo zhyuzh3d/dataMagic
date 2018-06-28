@@ -1,6 +1,7 @@
 const {
     app,
-    BrowserWindow
+    BrowserWindow,
+    globalShortcut
 } = require('electron')
 const path = require('path')
 const url = require('url')
@@ -12,8 +13,16 @@ let win
 function createWindow() {
     // 创建浏览器窗口。
     win = new BrowserWindow({
+        title: 'DataMagic',
         width: 800,
-        height: 600
+        height: 600,
+        webPreferences: {
+            webSecurity: false,
+            nodeIntegration: true,
+            nodeIntegrationInWorker: true,
+            allowRunningInsecureContent: true, //https和http混合模式
+            preload: path.join(__dirname, 'preload.js'),
+        }
     })
 
     // 然后加载应用的 index.html。
@@ -26,7 +35,7 @@ function createWindow() {
     }))
 
     // 打开开发者工具。
-    win.webContents.openDevTools()
+    //win.webContents.openDevTools()
 
     // 当 window 被关闭，这个事件会被触发。
     win.on('closed', () => {
@@ -40,7 +49,21 @@ function createWindow() {
 // Electron 会在初始化后并准备
 // 创建浏览器窗口时，调用这个函数。
 // 部分 API 在 ready 事件触发后才能使用。
-app.on('ready', createWindow)
+app.on('ready', () => {
+    createWindow()
+    globalShortcut.register('CommandOrControl+Alt+K', () => {
+        if (win) {
+            win.show();
+        } else {
+            createWindow();
+        }
+    })
+    globalShortcut.register('CommandOrControl+Alt+I', () => {
+        if (win) {
+            win.webContents.openDevTools();
+        }
+    })
+})
 
 // 当全部窗口关闭时退出。
 app.on('window-all-closed', () => {
@@ -58,6 +81,8 @@ app.on('activate', () => {
         createWindow()
     }
 })
+
+
 
 // 在这个文件中，你可以续写应用剩下主进程代码。
 // 也可以拆分成几个文件，然后用 require 导入。

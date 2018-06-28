@@ -5,6 +5,14 @@ module.exports = {
         filename: 'bundle.js', //编译后的文件
         path: path.resolve(__dirname, 'dist')
     },
+    module: {
+        rules: [
+            {
+                test: /\.css$/,
+                loader: ['css-loader']
+            }
+        ]
+    },
     mode: 'development',
     devServer: {
         contentBase: path.join(__dirname, "dist"), //编译好的文件放在这里

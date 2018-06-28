@@ -3,8 +3,19 @@ import {
 } from 'react'
 import h from 'react-hyperscript'
 
+/*import codemirror from 'codemirror'
+import {
+    UnControlled as CodeMirror
+} from 'react-codemirror2'*/
+
+import css from 'codemirror/lib/codemirror.css'
+var CodeMirror = require('react-codemirror')
+
+//import MyCoder from '../../Utilities/MyCoder'
+
+
 import Button from 'material-ui/Button'
-import Snackbar from 'material-ui/Snackbar';
+import Snackbar from 'material-ui/Snackbar'
 
 
 class Page extends Component {
@@ -13,67 +24,22 @@ class Page extends Component {
         this.state = {
             title: 'HomePage',
             sbopen: false,
+            code: 'alert("hello")'
         }
     }
 
     render() {
         let that = this
         return h('div', [
-            h('h1', this.state.title),
-            h(Button, {
-                onClick: () => {
-                    global.$showMyDialog({
-                        onClose: (ok) => {
-                            console.log('MyDialog said:', ok)
-                        },
-                        children: [h(Button, {
-                            onClick: () => {
-                                global.$hideMyDialog()
-                                console.log('Home Page said:', that.state.title)
-                            }
-                        }, 'close dialog')]
-                    })
-                }
-            }, 'open dialog'),
-
-            h('div'),
-            h(Button, {
-                onClick: () => {
-                    let id = Math.random()
-                    global.$addMySnackbar({
-                        anchorOrigin: {
-                            vertical: 'bottom',
-                            horizontal: 'center',
-                        },
-                        autoHideDuration: 3000,
-                        onClose: () => {
-                            console.log('Home Page said:', that.state.title)
-                        },
-                        message: 'Hello from MySnackbar!',
-                        action: [
-                            h(Button, {
-                                key: 'any',//必须要有这个，值任意
-                                color: 'secondary',
-                                onClick: () => {
-                                    global.$closeMySnackBar(id)
-                                    console.log('Home Page said:', that.state.title)
-                                }
-                            }, '关闭')
-                        ],
-                    }, id)
-                }
-            }, 'add snackbar'),
-
-            h('div'),
-            h(Button, {
-                color: 'primary',
-                variant: 'raised',
-                onClick: () => {
-                    global.XRouter.changePage('WelcomePage', {
-                        randNumber: Math.random(),
-                    })
+            h(CodeMirror, {
+                value: that.state.code,
+                options: {
+                    lineNumbers: true
                 },
-            }, 'go welcome')
+                onChange: (value) => {
+                    console.log(value)
+                }
+            })
         ])
     }
 }
