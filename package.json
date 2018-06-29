@@ -21,11 +21,11 @@
   "homepage": "https://github.com/zhyuzh3d/dataMagic#readme",
   "devDependencies": {
     "@material-ui/icons": "^1.0.0-beta.43",
-    "codemirror": "^5.39.0",
     "css-loader": "^0.28.11",
     "deepmerge": "^2.1.0",
     "electron": "^1.8.4",
     "history": "^4.7.2",
+    "jquery": "^3.3.1",
     "material-ui": "^1.0.0-beta.43",
     "react": "^16.3.2",
     "react-codemirror": "^1.0.0",

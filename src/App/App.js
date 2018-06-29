@@ -8,6 +8,7 @@ import {
     withStyles
 } from 'material-ui/styles'
 import PropTypes from 'prop-types'
+import $ from 'jquery'
 
 import Grid from 'material-ui/Grid'
 
@@ -30,13 +31,31 @@ class App extends Component {
         this.state = {
             currentPageName: 'WelcomePage',
             randNumber: Math.random(),
-            url: 'http://www.10knet.com/'
+            url: 'http://www.10knet.com/',
+            doc: null
         }
     }
 
     componentDidMount() {
-        global.XRouter.use(this)
+        let that = this
+        global.XRouter.use(that)
         global.XRouter.changePage()
+
+        //将webview内容同步到编辑窗口
+        const browser = document.querySelector('webview')
+        browser.addEventListener('dom-ready', (e) => {
+            browser.executeJavaScript(`document.documentElement.innerHTML`, function (str) {
+                let doc = document.createDocumentFragment()
+                let el = document.createElement('html')
+                el.innerHTML = str
+                doc.appendChild(el)
+
+                that.setState({
+                    doc: doc
+                })
+                console.log('>app.state.doc is ready.', $(doc).find('title').html())
+            })
+        })
     }
 
     componentWillUnmount() {
@@ -54,6 +73,7 @@ class App extends Component {
         let that = this
         const css = this.props.classes
         const webview = global.$webview = h('webview', {
+            id: 'browser',
             src: that.state.url,
             //nodeintegration: 'false',//浏览器内不支持nodejs
             style: {
@@ -73,12 +93,12 @@ class App extends Component {
                     minWidth: 360,
                     width: '20%',
                     height: '100%',
-                    borderRight: '1px solid #444',
+                    borderRight: '1px solid #AAA',
                 }
             }, h(Pages[this.state.currentPageName], {
-                app: that
+                app: that,
             })),
-            /*h('div', {
+            h('div', {
                 style: {
                     flexGrow: 1,
                     overflowY: 'hidden',
@@ -88,8 +108,8 @@ class App extends Component {
                     url: that.state.url,
                     app: that,
                 }),
-                webview
-            ]),*/
+                webview,
+            ]),
             h(MyDialog),
             h(MySnackbar),
         ]))
