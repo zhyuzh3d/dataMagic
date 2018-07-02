@@ -58,7 +58,6 @@ class App extends Component {
 
                 that.setState({
                     doc: str
-                    //doc: doc
                 })
 
                 for (let attr in global.docReadyFns) {

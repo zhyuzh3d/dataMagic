@@ -19,12 +19,15 @@ import {
 } from 'xmldom'
 import XPath from 'xpath'
 import Json2Html from 'json-pretty-html'
+import Jsoncsv from 'json-csv'
 
 import Grid from 'material-ui/Grid'
 import Card from 'material-ui/Card'
 import Button from 'material-ui/Button'
 import Snackbar from 'material-ui/Snackbar'
 import TextField from 'material-ui/TextField'
+import Tabs from 'material-ui/Tabs/Tabs'
+import Tab from 'material-ui/Tabs/Tab'
 
 import Style from './_style'
 
@@ -41,6 +44,8 @@ class Page extends Component {
             xdata: {},
             queryValue: '',
             refcount: 0,
+            tabon: 0,
+            csvUrl: null,
         }
     }
 
@@ -152,9 +157,48 @@ class Page extends Component {
         that.setState({
             xdata: xdata
         })
+        xdata && that.genCSVUrl(xdata[that.state.refpath])
+    }
+
+    showDevTool() {
+        try {
+            const browser = document.querySelector('webview')
+            browser.openDevTools()
+        } catch (err) {
+            console.log('>ShowDevTools:ERR:', err.message)
+        }
     }
 
 
+    genCSVUrl(data) {
+        let that = this
+        if (!data || data.length < 1) {
+            console.log('>SaveCSV:ERR', 'Nothing to save.')
+            return
+        }
+        let fields = []
+        for (let attr in data[0]) {
+            fields.push({
+                name: attr,
+                label: attr,
+            })
+        }
+        Jsoncsv.csvBuffered(data, {
+            fields: fields
+        }, (err, csv) => {
+            if (err) {
+                console.log('>SaveCSV:ERR', err.message)
+            } else {
+                var blob = new Blob(["\ufeff", csv], {
+                    type: "text/csv;charset=UTF-8"
+                })
+                var csvUrl = URL.createObjectURL(blob)
+                that.setState({
+                    csvUrl: csvUrl
+                })
+            }
+        })
+    }
 
     render() {
         let that = this
@@ -264,31 +308,59 @@ class Page extends Component {
                 onClick: () => {
                     that.delKey()
                 }
-            }, 'DelKey')
-        ])
+            }, 'DelKey'),
+            that.state.csvUrl && h('a', {
+                    href: that.state.csvUrl,
+                    style: {
+                        textDecoration: 'none'
+                    }
+                },
+                h(Button, {
+                    className: css.button,
+                    variant: 'raised',
+                    size: 'small',
+                    color: 'default',
+                }, 'SaveCSV')), ])
 
-        let xobjDom = h('p', {
+        let xobjDom = h('div', {
             className: css.note,
             dangerouslySetInnerHTML: {
                 __html: Json2Html(that.state.xobj)
             }
         })
 
-        let xdataDom = h('p', {
-            className: css.note,
-            dangerouslySetInnerHTML: {
-                __html: Json2Html(that.state.xdata)
-            }
-        })
+        let xdataDom = h('div', {}, [
+            h('div', {
+                className: css.note,
+                dangerouslySetInnerHTML: {
+                    __html: Json2Html(that.state.xdata)
+                }
+            })
+        ])
+
+        let buttonRowTop = h('div', {
+            className: css.valueRow,
+        }, [
+            h(Button, {
+                className: css.button,
+                variant: 'raised',
+                size: 'small',
+                color: 'default',
+                onClick: () => {
+                    that.showDevTool()
+                },
+                style: {
+                    marginLeft: 8
+                }
+            }, 'DevTools')
+        ])
+
 
         return h('div', {}, [
+            buttonRowTop,
             h(Card, {
                 className: css.card
             }, [
-                h('div', {
-                    id: 'biaoti',
-                    className: css.cardTitle
-                }, '获取元素值'),
                 refRow,
                 countRow,
                 queryRow,
@@ -296,13 +368,28 @@ class Page extends Component {
                 keyRow,
                 buttonRow,
             ]),
+            h(Tabs, {
+                value: that.state.tabon,
+                indicatorColor: "primary",
+                textColor: "primary",
+                fullWidth: true,
+                onChange: (evt, val) => {
+                    that.setState({
+                        tabon: val
+                    })
+                }
+            }, [
+               h(Tab, {
+                    label: 'Result'
+                }),
+               h(Tab, {
+                    label: 'Rules'
+                })
+            ]),
             h(Card, {
                 className: css.card,
-                elevation: 0
-            }, [
-                xobjDom,
-                xdataDom,
-            ])
+                elevation: 0,
+            }, that.state.tabon == 0 ? xdataDom : xobjDom),
         ])
     }
 }
