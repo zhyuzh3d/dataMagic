@@ -24,6 +24,11 @@ import MySnackbar from '../Utilities/MySnackbars'
 import Toolbar from '../Units/Toolbar'
 
 global.XRouter = XRouter //输出到全局
+global.docReadyFns = {
+    'sample': (doc) => {
+        console.log('>DocReadyFn:sample:Doc title is ' + $(doc).find('head title').html())
+    }
+}
 
 class App extends Component {
     constructor(props) {
@@ -31,7 +36,8 @@ class App extends Component {
         this.state = {
             currentPageName: 'WelcomePage',
             randNumber: Math.random(),
-            url: 'http://www.10knet.com/',
+            url: 'http://localhost:9000/test.html',
+            //url: 'http://www.10knet.com/',
             doc: null
         }
     }
@@ -51,9 +57,17 @@ class App extends Component {
                 doc.appendChild(el)
 
                 that.setState({
-                    doc: doc
+                    doc: str
+                    //doc: doc
                 })
-                console.log('>app.state.doc is ready.', $(doc).find('title').html())
+
+                for (let attr in global.docReadyFns) {
+                    try {
+                        global.docReadyFns[attr](doc)
+                    } catch (err) {
+                        console.log('>DocReadyFns:' + attr + ':failed:', err.message)
+                    }
+                }
             })
         })
     }

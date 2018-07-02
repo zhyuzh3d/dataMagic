@@ -29,6 +29,15 @@ const styles = theme => ({
         fontSize: 14,
         maxHeight: 120,
         overflowY: 'scroll'
+    },
+    button: {
+        marginRight: 12
+    },
+    note: {
+        fontSize: 12,
+        width: '100%',
+        color: '#666',
+
     }
 })
 export default styles

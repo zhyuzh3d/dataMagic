@@ -1,0 +1,6 @@
+{
+    "dimitrk.exclude-indexing-filetree.excludeList": [
+        ".git(?!ignore)",
+        "node_modules"
+    ]
+}
