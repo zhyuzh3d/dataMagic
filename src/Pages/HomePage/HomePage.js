@@ -37,8 +37,10 @@ class Page extends Component {
         let that = this
         that.state = {
             title: 'HomePage',
-            refpath: '//ul',
-            xpath: '/p',
+            refpath: "//div[@class='job-list']/ul/li",
+            xpath: "[1]//*[@class='info-primary']//p/",
+            //xpath: '//div[@class="job-title"]',
+            regx: 'p>.{1,8}(?=<)',
             xobj: {},
             key: 'name',
             xdata: {},
@@ -49,15 +51,20 @@ class Page extends Component {
             csvFile: 'DataMagic.csv',
             rulesUrl: null,
             rulesFile: 'DataMagic.mdr',
+            doc: null,
+            nodes: {},
         }
     }
 
     componentDidMount() {
         let that = this
         global.docReadyFns['setTitle'] = (domstr) => {
+            that.setState({
+                doc: that.domParser(that.props.app.state.doc)
+            })
             that.queryDoc()
-            var doc = new DOMParser().parseFromString(that.props.app.state.doc)
-            let title = that.queryDoc('//head', '/title', true)
+            var doc = that.domParser(that.props.app.state.doc)
+            let title = that.queryDoc('//head', '/title', '', true)
             if (title) {
                 that.setState({
                     rulesFile: title + '.mdr',
@@ -68,19 +75,41 @@ class Page extends Component {
         }
     }
 
-    //根据xpath查询数据
-    queryDoc(refstr, xstr, notset) {
+    domParser(str) {
+        try {
+            return new DOMParser().parseFromString(str)
+        } catch (err) {
+            return null
+        }
+    }
+
+    //根据xpath查询数据,三个参数严格使用undefined指向that.state
+    queryDoc(refstr, xstr, regxstr, notset) {
         let that = this
-        let refpath = refstr ? refstr : that.state.refpath
-        let xpath = xstr ? xstr : that.state.xpath
+        let refpath = refstr !== undefined ? refstr : that.state.refpath
+        let xpath = xstr !== undefined ? xstr : that.state.xpath
+        let regx = regxstr !== undefined ? regxstr : that.state.regx
         let value = 'Not found.'
         let domstr = that.props.app.state.doc
+
+
         let count = 0
         if (domstr) {
-            var doc = new DOMParser().parseFromString(domstr)
+            var doc = that.state.doc
+            if (!doc) {
+                doc = that.domParser(domstr)
+            }
             try {
-                let refnodes = XPath.select(refpath, doc)
+                let refnodes = that.state.nodes[refpath]
+                if (!refnodes) {
+                    refnodes = XPath.select(refpath, doc)
+                    that.state.nodes[refpath] = refnodes
+                    that.setState({
+                        nodes: that.state.nodes
+                    })
+                }
                 count = refnodes ? refnodes.length : 0
+
                 //斜杠结尾使用string，否则使用data
                 let usestr = xpath[xpath.length - 1] == '/'
                 if (usestr) {
@@ -88,12 +117,19 @@ class Page extends Component {
                 }
                 let path = refpath + xpath
                 var nodes = XPath.select(path, doc)
+
                 let data = (nodes[0] && nodes[0].firstChild) ? nodes[0].firstChild.data : null
                 value = !usestr ? data : nodes.toString()
+
+                //正则处理
+                if (regx) {
+                    value = value.match(new RegExp(regx, 'g'))[0]
+                }
             } catch (err) {
                 value = err.message
             }
         }
+
         if (!notset) {
             that.setState({
                 queryValue: value,
@@ -112,13 +148,15 @@ class Page extends Component {
         that.state.xobj[refpath][that.state.key] = {
             key: that.state.key,
             xpath: that.state.xpath,
-            queryValue: that.state.queryValue
+            queryValue: that.state.queryValue,
+            regx: that.state.regx,
         }
         that.setState({
             xobj: that.state.xobj
+        }, () => {
+            that.getData()
+            that.genRulesUrl()
         })
-        that.getData()
-        that.genRulesUrl()
     }
 
     //删除对象里面的一个字段
@@ -137,9 +175,10 @@ class Page extends Component {
 
         that.setState({
             xobj: newxobj
+        }, () => {
+            that.getData()
+            that.genRulesUrl()
         })
-        that.getData()
-        that.genRulesUrl()
     }
 
     //利用xdata查询生成数据
@@ -153,14 +192,13 @@ class Page extends Component {
             let obj = xobj[refpath]
             for (let n = 1; n < obj.count + 1; n++) {
                 let data = {}
-                let rpath = refpath + '[' + n + ']'
                 for (let attr in obj) {
                     if (attr != 'count') {
                         let xpath = obj[attr].xpath
-                        data[attr] = that.queryDoc(rpath, xpath, true)
+                        let regx = obj[attr].regx
+                        data[attr] = that.queryDoc(refpath || '', '[' + n + ']' + xpath || '', regx || '', true)
                     }
                 }
-
                 if (JSON.stringify(data) != "{}") xdata[refpath].push(data)
             }
             if (xdata[refpath].length == 0) delete xdata[refpath]
@@ -262,21 +300,30 @@ class Page extends Component {
             }
             break
         }
-        xobj && that.setState({
-            xobj: xobj,
+        that.setState({
+            xobj: xobj ? xobj : that.state.xobj,
+            refpath: refpath ? refpath : that.state.refpath,
+            xpath: xpath ? xpath : that.state.xpath
+        }, () => {
+            that.queryDoc()
+            that.getData()
+            that.genRulesUrl()
         })
-        refpath && that.setState({
-            refpath: refpath,
-            xpath: xpath
-        })
-        xpath && that.setState({
-            refpath: refpath,
-            xpath: xpath
-        })
+    }
 
-        that.queryDoc()
-        that.getData()
-        that.genRulesUrl()
+    clearXobj() {
+        let that = this
+        that.setState({
+            xobj: {},
+            refpath: '//head',
+            xpath: '/title',
+            nodes: {},
+        }, () => {
+            that.queryDoc()
+            that.getData()
+            that.genCSVUrl()
+            that.genRulesUrl()
+        })
     }
 
     render() {
@@ -298,7 +345,7 @@ class Page extends Component {
                 onChange: (evt) => {
                     that.setState({
                         refpath: evt.target.value,
-                        value: that.queryDoc(evt.target.value, that.state.xpath)
+                        value: that.queryDoc(evt.target.value, undefined, undefined)
                     })
                 }
             }),
@@ -319,7 +366,28 @@ class Page extends Component {
                 onChange: (evt) => {
                     that.setState({
                         xpath: evt.target.value,
-                        value: that.queryDoc(that.state.refpath, evt.target.value)
+                        value: that.queryDoc(undefined, evt.target.value, undefined)
+                    })
+                }
+            }),
+        ])
+
+        let regxRow = h('div', {
+            className: css.valueRow
+        }, [
+            h('div', {
+                className: css.rowLabel,
+                style: {
+                    lineHeight: '30px'
+                }
+            }, 'Regx: '),
+                h(TextField, {
+                className: css.rowContent,
+                value: that.state.regx,
+                onChange: (evt) => {
+                    that.setState({
+                        regx: evt.target.value,
+                        value: that.queryDoc(undefined, undefined, evt.target.value)
                     })
                 }
             }),
@@ -374,11 +442,23 @@ class Page extends Component {
                 className: css.button,
                 variant: 'raised',
                 size: 'small',
+                color: 'default',
+                onClick: () => {
+                    that.queryDoc()
+                    that.getData()
+                    that.genCSVUrl()
+                    that.genRulesUrl()
+                }
+            }, 'Refresh'),
+            h(Button, {
+                className: css.button,
+                variant: 'raised',
+                size: 'small',
                 color: 'primary',
                 onClick: () => {
                     that.addKey()
                 }
-            }, 'AddKey'),
+            }, 'Add'),
             h(Button, {
                 className: css.button,
                 variant: 'raised',
@@ -387,7 +467,7 @@ class Page extends Component {
                 onClick: () => {
                     that.delKey()
                 }
-            }, 'DelKey'),
+            }, 'Del'),
             that.state.csvUrl && h('a', {
                     href: that.state.csvUrl,
                     download: that.state.csvFile,
@@ -400,20 +480,17 @@ class Page extends Component {
                     variant: 'raised',
                     size: 'small',
                     color: 'primary',
-                }, 'SaveCSV')
+                }, 'CSV')
               ),
             h(Button, {
                 className: css.button,
                 variant: 'raised',
                 size: 'small',
-                color: 'default',
+                color: 'secondary',
                 onClick: () => {
-                    that.queryDoc()
-                    that.getData()
-                    that.genCSVUrl()
-                    that.genRulesUrl()
+                    that.clearXobj()
                 }
-            }, 'Refresh'),
+            }, 'Clear'),
         ])
 
         let xobjDom = h('div', {
@@ -483,6 +560,7 @@ class Page extends Component {
                 refRow,
                 countRow,
                 queryRow,
+                regxRow,
                 valueRow,
                 keyRow,
                 buttonRow,
