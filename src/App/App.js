@@ -34,7 +34,7 @@ class App extends Component {
     constructor(props) {
         super(props)
         this.state = {
-            currentPageName: 'WelcomePage',
+            currentPageName: 'HomePage',
             randNumber: Math.random(),
             url: 'http://localhost:9000/test.html',
             //url: 'http://www.10knet.com/',
@@ -107,6 +107,7 @@ class App extends Component {
                     width: '20%',
                     height: '100%',
                     borderRight: '1px solid #AAA',
+                    overflowY:'auto'
                 }
             }, h(Pages[this.state.currentPageName], {
                 app: that,

@@ -31,7 +31,8 @@ const styles = theme => ({
         overflowY: 'scroll'
     },
     button: {
-        marginRight: 12
+        marginRight: 8,
+        minWidth:32,
     },
     note: {
         fontSize: 12,

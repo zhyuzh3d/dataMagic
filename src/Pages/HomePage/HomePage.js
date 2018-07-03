@@ -46,15 +46,25 @@ class Page extends Component {
             refcount: 0,
             tabon: 0,
             csvUrl: null,
+            csvFile: 'DataMagic.csv',
+            rulesUrl: null,
+            rulesFile: 'DataMagic.mdr',
         }
     }
 
     componentDidMount() {
         let that = this
-        global.docReadyFns['query'] = (doc) => {
+        global.docReadyFns['setTitle'] = (domstr) => {
             that.queryDoc()
-            //let title = that.queryDoc('//title')[0].firstChild.data
-            //console.log('>Query:Doc title is ' + (title ? title : 'not found') + '.')
+            var doc = new DOMParser().parseFromString(that.props.app.state.doc)
+            let title = that.queryDoc('//head', '/title', true)
+            if (title) {
+                that.setState({
+                    rulesFile: title + '.mdr',
+                    csvFile: title + '.csv'
+                })
+            }
+            console.log('>Query:Doc title is ' + (title ? title : 'not found') + '.')
         }
     }
 
@@ -77,7 +87,6 @@ class Page extends Component {
                     xpath = xpath.slice(0, xpath.length - 1)
                 }
                 let path = refpath + xpath
-                console.log('use path:', path)
                 var nodes = XPath.select(path, doc)
                 let data = (nodes[0] && nodes[0].firstChild) ? nodes[0].firstChild.data : null
                 value = !usestr ? data : nodes.toString()
@@ -109,6 +118,7 @@ class Page extends Component {
             xobj: that.state.xobj
         })
         that.getData()
+        that.genRulesUrl()
     }
 
     //删除对象里面的一个字段
@@ -129,6 +139,7 @@ class Page extends Component {
             xobj: newxobj
         })
         that.getData()
+        that.genRulesUrl()
     }
 
     //利用xdata查询生成数据
@@ -198,6 +209,74 @@ class Page extends Component {
                 })
             }
         })
+    }
+
+    genRulesUrl() {
+        let that = this
+        var blob = new Blob(["\ufeff", JSON.stringify(that.state.xobj)], {
+            type: "application/mdr;charset=UTF-8"
+        })
+        var url = URL.createObjectURL(blob)
+        that.setState({
+            rulesUrl: url
+        })
+    }
+
+    loadRules() {
+        let that = this
+        let file_input = document.createElement('input')
+        file_input.setAttribute('accept', ".mdr")
+        file_input.addEventListener("change", (evt) => {
+            let f = evt.target.files ? evt.target.files[0] : null
+            if (!f) return
+            var reader = new FileReader()
+            reader.onload = function (e) {
+                var contents = e.target.result
+                var xobj = null
+                try {
+                    xobj = JSON.parse(contents)
+                } catch (err) {
+                    console.log('>LoadRules:ERR:', err.message)
+                }
+                if (xobj) {
+                    that.setByXobj(xobj)
+                }
+            }
+            reader.readAsText(f);
+        }, false)
+        file_input.type = 'file'
+        file_input.click()
+    }
+
+    setByXobj(xobj) {
+        let that = this
+        let refpath, xpath
+        for (let rpath in xobj) {
+            let obj = xobj[rpath]
+            refpath = rpath
+            for (let key in obj) {
+                if (key != 'count') {
+                    xpath = obj[key].xpath
+                    break
+                }
+            }
+            break
+        }
+        xobj && that.setState({
+            xobj: xobj,
+        })
+        refpath && that.setState({
+            refpath: refpath,
+            xpath: xpath
+        })
+        xpath && that.setState({
+            refpath: refpath,
+            xpath: xpath
+        })
+
+        that.queryDoc()
+        that.getData()
+        that.genRulesUrl()
     }
 
     render() {
@@ -300,7 +379,7 @@ class Page extends Component {
                     that.addKey()
                 }
             }, 'AddKey'),
-             h(Button, {
+            h(Button, {
                 className: css.button,
                 variant: 'raised',
                 size: 'small',
@@ -311,6 +390,7 @@ class Page extends Component {
             }, 'DelKey'),
             that.state.csvUrl && h('a', {
                     href: that.state.csvUrl,
+                    download: that.state.csvFile,
                     style: {
                         textDecoration: 'none'
                     }
@@ -319,8 +399,22 @@ class Page extends Component {
                     className: css.button,
                     variant: 'raised',
                     size: 'small',
-                    color: 'default',
-                }, 'SaveCSV')), ])
+                    color: 'primary',
+                }, 'SaveCSV')
+              ),
+            h(Button, {
+                className: css.button,
+                variant: 'raised',
+                size: 'small',
+                color: 'default',
+                onClick: () => {
+                    that.queryDoc()
+                    that.getData()
+                    that.genCSVUrl()
+                    that.genRulesUrl()
+                }
+            }, 'Refresh'),
+        ])
 
         let xobjDom = h('div', {
             className: css.note,
@@ -341,6 +435,34 @@ class Page extends Component {
         let buttonRowTop = h('div', {
             className: css.valueRow,
         }, [
+            h('div', {
+                style: {
+                    width: 8
+                }
+            }),
+            h(Button, {
+                className: css.button,
+                variant: 'raised',
+                size: 'small',
+                color: 'default',
+                onClick: () => {
+                    that.loadRules()
+                }
+            }, 'LoadRules'),
+            that.state.rulesUrl && h('a', {
+                    href: that.state.rulesUrl,
+                    download: that.state.rulesFile,
+                    style: {
+                        textDecoration: 'none'
+                    }
+                },
+                h(Button, {
+                    className: css.button,
+                    variant: 'raised',
+                    size: 'small',
+                    color: 'default',
+                }, 'SaveRules')
+              ),
             h(Button, {
                 className: css.button,
                 variant: 'raised',
@@ -348,11 +470,8 @@ class Page extends Component {
                 color: 'default',
                 onClick: () => {
                     that.showDevTool()
-                },
-                style: {
-                    marginLeft: 8
                 }
-            }, 'DevTools')
+            }, 'DevTools'),
         ])
 
 
