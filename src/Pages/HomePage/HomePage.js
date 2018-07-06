@@ -37,10 +37,9 @@ class Page extends Component {
         let that = this
         that.state = {
             title: 'HomePage',
-            refpath: "//div[@class='job-list']/ul/li",
-            xpath: "[1]//*[@class='info-primary']//p/",
-            //xpath: '//div[@class="job-title"]',
-            regx: 'p>.{1,8}(?=<)',
+            refpath: '//body',
+            xpath: '//p[@id="x"]',
+            regx: '',
             xobj: {},
             key: 'name',
             xdata: {},
@@ -72,6 +71,9 @@ class Page extends Component {
                 })
             }
             console.log('>Query:Doc title is ' + (title ? title : 'not found') + '.')
+
+
+            setTimeout(that.delayProc, 1200)
         }
     }
 
@@ -338,7 +340,7 @@ class Page extends Component {
                 style: {
                     lineHeight: '30px'
                 }
-            }, 'RefPath: '),
+            }, '单元路径: '),
                 h(TextField, {
                 className: css.rowContent,
                 value: that.state.refpath,
@@ -359,7 +361,7 @@ class Page extends Component {
                 style: {
                     lineHeight: '30px'
                 }
-            }, 'SubPath: '),
+            }, '字段路径: '),
                 h(TextField, {
                 className: css.rowContent,
                 value: that.state.xpath,
@@ -380,7 +382,7 @@ class Page extends Component {
                 style: {
                     lineHeight: '30px'
                 }
-            }, 'Regx: '),
+            }, '正则过滤: '),
                 h(TextField, {
                 className: css.rowContent,
                 value: that.state.regx,
@@ -398,7 +400,7 @@ class Page extends Component {
         }, [
             h('div', {
                 className: css.rowLabel
-            }, 'Value: '),
+            }, '获取结果: '),
             h('div', {
                 className: css.rowContent
             }, that.state.queryValue)
@@ -409,7 +411,7 @@ class Page extends Component {
         }, [
             h('div', {
                 className: css.rowLabel
-            }, 'Count: '),
+            }, '单元数量: '),
             h('div', {
                 className: css.rowContent
             }, that.state.refcount)
@@ -423,7 +425,7 @@ class Page extends Component {
                 style: {
                     lineHeight: '30px'
                 }
-            }, 'Key: '),
+            }, '字段名称: '),
                 h(TextField, {
                 className: css.rowContent,
                 value: that.state.key,
@@ -449,7 +451,7 @@ class Page extends Component {
                     that.genCSVUrl()
                     that.genRulesUrl()
                 }
-            }, 'Refresh'),
+            }, '刷新'),
             h(Button, {
                 className: css.button,
                 variant: 'raised',
@@ -458,7 +460,7 @@ class Page extends Component {
                 onClick: () => {
                     that.addKey()
                 }
-            }, 'Add'),
+            }, '加字段'),
             h(Button, {
                 className: css.button,
                 variant: 'raised',
@@ -467,7 +469,7 @@ class Page extends Component {
                 onClick: () => {
                     that.delKey()
                 }
-            }, 'Del'),
+            }, '删字段'),
             that.state.csvUrl && h('a', {
                     href: that.state.csvUrl,
                     download: that.state.csvFile,
@@ -480,7 +482,7 @@ class Page extends Component {
                     variant: 'raised',
                     size: 'small',
                     color: 'primary',
-                }, 'CSV')
+                }, '保存CSV')
               ),
             h(Button, {
                 className: css.button,
@@ -490,7 +492,7 @@ class Page extends Component {
                 onClick: () => {
                     that.clearXobj()
                 }
-            }, 'Clear'),
+            }, '清空'),
         ])
 
         let xobjDom = h('div', {
@@ -523,9 +525,18 @@ class Page extends Component {
                 size: 'small',
                 color: 'default',
                 onClick: () => {
+                    that.props.app.regenDoc()
+                }
+            }, '生成'),
+            h(Button, {
+                className: css.button,
+                variant: 'raised',
+                size: 'small',
+                color: 'default',
+                onClick: () => {
                     that.loadRules()
                 }
-            }, 'LoadRules'),
+            }, '载入规则'),
             that.state.rulesUrl && h('a', {
                     href: that.state.rulesUrl,
                     download: that.state.rulesFile,
@@ -538,7 +549,7 @@ class Page extends Component {
                     variant: 'raised',
                     size: 'small',
                     color: 'default',
-                }, 'SaveRules')
+                }, '保存规则')
               ),
             h(Button, {
                 className: css.button,
@@ -548,7 +559,8 @@ class Page extends Component {
                 onClick: () => {
                     that.showDevTool()
                 }
-            }, 'DevTools'),
+            }, '开发工具'),
+
         ])
 
 
@@ -577,10 +589,10 @@ class Page extends Component {
                 }
             }, [
                h(Tab, {
-                    label: 'Result'
+                    label: '全部结果'
                 }),
                h(Tab, {
-                    label: 'Rules'
+                    label: '全部规则'
                 })
             ]),
             h(Card, {

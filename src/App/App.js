@@ -36,9 +36,7 @@ class App extends Component {
         this.state = {
             currentPageName: 'HomePage',
             randNumber: Math.random(),
-//            url: 'http://localhost:9000/test.html',
-            url: 'https://www.zhipin.com/c101190400-p100101/',
-            //url: 'http://www.10knet.com/',
+            url: 'http://localhost:9000/test.html',
             doc: null
         }
     }
@@ -47,28 +45,33 @@ class App extends Component {
         let that = this
         global.XRouter.use(that)
         global.XRouter.changePage()
-
-        //将webview内容同步到编辑窗口
         const browser = document.querySelector('webview')
         browser.addEventListener('dom-ready', (e) => {
-            browser.executeJavaScript(`document.documentElement.innerHTML`, function (str) {
-                let doc = document.createDocumentFragment()
-                let el = document.createElement('html')
-                el.innerHTML = str
-                doc.appendChild(el)
+            that.regenDoc()
+        })
+    }
 
-                that.setState({
-                    doc: str
-                })
+    //将webview内容同步到编辑窗口
+    regenDoc() {
+        let that = this
+        const browser = document.querySelector('webview')
+        browser.executeJavaScript(`document.documentElement.innerHTML`, function (str) {
+            let doc = document.createDocumentFragment()
+            let el = document.createElement('html')
+            el.innerHTML = str
+            doc.appendChild(el)
 
-                for (let attr in global.docReadyFns) {
-                    try {
-                        global.docReadyFns[attr](doc)
-                    } catch (err) {
-                        console.log('>DocReadyFns:' + attr + ':failed:', err.message)
-                    }
-                }
+            that.setState({
+                doc: str
             })
+
+            for (let attr in global.docReadyFns) {
+                try {
+                    global.docReadyFns[attr](doc)
+                } catch (err) {
+                    console.log('>DocReadyFns:' + attr + ':failed:', err.message)
+                }
+            }
         })
     }
 
@@ -108,7 +111,7 @@ class App extends Component {
                     width: '20%',
                     height: '100%',
                     borderRight: '1px solid #AAA',
-                    overflowY:'auto'
+                    overflowY: 'auto'
                 }
             }, h(Pages[this.state.currentPageName], {
                 app: that,

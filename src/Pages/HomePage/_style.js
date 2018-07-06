@@ -21,7 +21,7 @@ const styles = theme => ({
         color: '#AAA',
         flexGrow: 'initial',
         marginRight: 12,
-        minWidth: 48
+        minWidth: 56
     },
     rowContent: {
         flexGrow: 1,
