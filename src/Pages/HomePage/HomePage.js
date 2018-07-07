@@ -4,6 +4,7 @@ props:{app}
 选定数据对应的父层dom范围-选定多个子dom并对应字段-是否通过父层dom的兄弟节点一次添加多个数据
 props:{app}
 */
+
 import {
     Component
 } from 'react'
@@ -37,8 +38,10 @@ class Page extends Component {
         let that = this
         that.state = {
             title: 'HomePage',
-            refpath: '//body',
-            xpath: '//p[@id="x"]',
+            refpath: '//head',
+            xpath: '//title',
+            //            refpath: '//li[@class="chapter"]',
+            //            xpath: '//li[@class="items"][#]//span[2]',
             regx: '',
             xobj: {},
             key: 'name',
@@ -51,19 +54,27 @@ class Page extends Component {
             rulesUrl: null,
             rulesFile: 'DataMagic.mdr',
             doc: null,
-            nodes: {},
+            refNodes: {},
+            refDoms: {},
+            doms: {},
         }
     }
 
     componentDidMount() {
         let that = this
         global.docReadyFns['setTitle'] = (domstr) => {
-            that.setState({
-                doc: that.domParser(that.props.app.state.doc)
-            })
+            that.setTitle()
+        }
+    }
+
+    setTitle() {
+        let that = this
+        that.setState({
+            doc: that.domParser(that.props.app.state.doc)
+        }, () => {
             that.queryDoc()
             var doc = that.domParser(that.props.app.state.doc)
-            let title = that.queryDoc('//head', '/title', '', true)
+            let title = that.queryDoc('//head', '//title', '', true)
             if (title) {
                 that.setState({
                     rulesFile: title + '.mdr',
@@ -71,10 +82,7 @@ class Page extends Component {
                 })
             }
             console.log('>Query:Doc title is ' + (title ? title : 'not found') + '.')
-
-
-            setTimeout(that.delayProc, 1200)
-        }
+        })
     }
 
     domParser(str) {
@@ -94,51 +102,97 @@ class Page extends Component {
         let value = 'Not found.'
         let domstr = that.props.app.state.doc
 
+        if (!domstr) {
+            console.log('>QueryDoc:Err:domstr in empty.')
+            return value
+        }
 
-        let count = 0
-        if (domstr) {
-            var doc = that.state.doc
-            if (!doc) {
-                doc = that.domParser(domstr)
+        var doc = that.state.doc
+        if (!doc) {
+            doc = that.domParser(domstr)
+            that.state.doc = doc
+        }
+
+        try {
+            //如果不指定，那么就返回第一个[1]
+            refpath = /\[[0-9]\]$/.test(refpath) ? refpath : refpath + '[1]'
+
+            //尝试获取缓存的dom
+            let refNodes = that.state.refNodes[refpath] || XPath.select(refpath, doc)
+            that.state.refNodes[refpath] = refNodes
+            let refdom = that.state.refDoms[refpath] || that.domParser(refNodes[0].toString())
+            that.state.refDoms[refpath] = refdom
+
+            //斜杠结尾使用string，否则使用data
+            let usestr = xpath[xpath.length - 1] == '/'
+            if (usestr) {
+                xpath = xpath.slice(0, xpath.length - 1)
             }
-            try {
-                let refnodes = that.state.nodes[refpath]
-                if (!refnodes) {
-                    refnodes = XPath.select(refpath, doc)
-                    that.state.nodes[refpath] = refnodes
-                    that.setState({
-                        nodes: that.state.nodes
-                    })
-                }
-                count = refnodes ? refnodes.length : 0
 
-                //斜杠结尾使用string，否则使用data
-                let usestr = xpath[xpath.length - 1] == '/'
-                if (usestr) {
-                    xpath = xpath.slice(0, xpath.length - 1)
-                }
-                let path = refpath + xpath
-                var nodes = XPath.select(path, doc)
-
+            //如果xpath包含[#]那么就返回一个字符串数组列表
+            if (xpath.indexOf('[#]') != -1) {
+                let xpathArr = xpath.split('[#]')
+                let itemNode = XPath.select(xpathArr[0], refdom)
+                value = itemNode.map((sub, n) => {
+                    let subDom = that.domParser(itemNode[n].toString())
+                    console.log('>>n', n, subDom.toString())
+                    let node = XPath.select(xpathArr[1], subDom)
+                    let d = (node[0] && node[0].firstChild) ? node[0].firstChild.data : null
+                    let v = !usestr ? d : node.toString()
+                    if (regx) {
+                        v = v.match(new RegExp(regx, 'g'))[0]
+                    }
+                    if (v) return v
+                })
+            } else {
+                var nodes = XPath.select(xpath, refdom)
                 let data = (nodes[0] && nodes[0].firstChild) ? nodes[0].firstChild.data : null
                 value = !usestr ? data : nodes.toString()
-
-                //正则处理
                 if (regx) {
                     value = value.match(new RegExp(regx, 'g'))[0]
                 }
-            } catch (err) {
-                value = err.message
             }
+        } catch (err) {
+            value = err.message
         }
 
         if (!notset) {
             that.setState({
                 queryValue: value,
-                refcount: count
+                refcount: that.getCount(refpath, doc)
             })
         }
         return value
+    }
+
+    //获取count数量
+    getCount(refpath, doc) {
+        let that = this
+        if (!doc) {
+            doc = that.state.doc
+        }
+        if (!doc) {
+            doc = that.domParser(that.props.app.state.doc)
+        }
+
+        let refnodes = that.state.refNodes[refpath]
+        if (!refnodes) {
+            try {
+                refnodes = XPath.select(refpath, doc)
+                that.state.refNodes[refpath] = refnodes
+                that.setState({
+                    refNodes: that.state.nodes || {}
+                })
+            } catch (err) {
+                console.log('>GetCount:ERR:', err.message)
+            }
+        }
+        let count = refnodes ? refnodes.length : 0
+        that.setState({
+            refcount: count
+        })
+
+        return count
     }
 
     //向对象里面添加一个字段
@@ -192,13 +246,21 @@ class Page extends Component {
         for (let refpath in xobj) {
             xdata[refpath] = []
             let obj = xobj[refpath]
-            for (let n = 1; n < obj.count + 1; n++) {
+            let count = that.getCount(refpath) //使用重新计算的count数量
+            for (let n = 1; n < count + 1; n++) {
                 let data = {}
                 for (let attr in obj) {
                     if (attr != 'count') {
                         let xpath = obj[attr].xpath
                         let regx = obj[attr].regx
-                        data[attr] = that.queryDoc(refpath || '', '[' + n + ']' + xpath || '', regx || '', true)
+                        let query = that.queryDoc(refpath + '[' + n + ']', xpath || '', regx || '', true)
+                        if (query.constructor == Array) {
+                            query.forEach((n, v) => {
+                                data[String(v)] = n
+                            })
+                        } else {
+                            data[attr] = query
+                        }
                     }
                 }
                 if (JSON.stringify(data) != "{}") xdata[refpath].push(data)
@@ -318,13 +380,34 @@ class Page extends Component {
         that.setState({
             xobj: {},
             refpath: '//head',
-            xpath: '/title',
+            xpath: '//title',
             nodes: {},
+            doc: null,
+            refNodes: {},
+            refDoms: {},
+            doms: {},
         }, () => {
             that.queryDoc()
             that.getData()
             that.genCSVUrl()
             that.genRulesUrl()
+        })
+    }
+
+    regenDoc() {
+        let that = this
+        that.setState({
+            nodes: {},
+            doc: null,
+            refNodes: {},
+            refDoms: {},
+            doms: {},
+        }, () => {
+            that.props.app.regenDoc((doc, browser) => {
+                that.setState({
+                    doc: doc
+                })
+            })
         })
     }
 
@@ -444,18 +527,6 @@ class Page extends Component {
                 className: css.button,
                 variant: 'raised',
                 size: 'small',
-                color: 'default',
-                onClick: () => {
-                    that.queryDoc()
-                    that.getData()
-                    that.genCSVUrl()
-                    that.genRulesUrl()
-                }
-            }, '刷新'),
-            h(Button, {
-                className: css.button,
-                variant: 'raised',
-                size: 'small',
                 color: 'primary',
                 onClick: () => {
                     that.addKey()
@@ -503,6 +574,23 @@ class Page extends Component {
         })
 
         let xdataDom = h('div', {}, [
+            h(Button, {
+                className: css.button,
+                variant: 'raised',
+                size: 'small',
+                color: 'default',
+                onClick: () => {
+                    that.queryDoc()
+                    that.getData()
+                    that.genCSVUrl()
+                    that.genRulesUrl()
+                }
+            }, '刷新数据'),
+            h('div', {
+                style: {
+                    height: 12
+                }
+            }),
             h('div', {
                 className: css.note,
                 dangerouslySetInnerHTML: {
@@ -523,11 +611,11 @@ class Page extends Component {
                 className: css.button,
                 variant: 'raised',
                 size: 'small',
-                color: 'default',
+                color: 'secondary',
                 onClick: () => {
-                    that.props.app.regenDoc()
+                    that.regenDoc()
                 }
-            }, '生成'),
+            }, '分析页面'),
             h(Button, {
                 className: css.button,
                 variant: 'raised',
@@ -574,7 +662,7 @@ class Page extends Component {
                 queryRow,
                 regxRow,
                 valueRow,
-                keyRow,
+                that.state.xpath.indexOf('[#]') == -1 && keyRow,
                 buttonRow,
             ]),
             h(Tabs, {

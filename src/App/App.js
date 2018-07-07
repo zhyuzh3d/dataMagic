@@ -51,8 +51,8 @@ class App extends Component {
         })
     }
 
-    //将webview内容同步到编辑窗口
-    regenDoc() {
+    //将webview内容同步到编辑窗口,callbackFn(doc)
+    regenDoc(callbackFn) {
         let that = this
         const browser = document.querySelector('webview')
         browser.executeJavaScript(`document.documentElement.innerHTML`, function (str) {
@@ -64,6 +64,8 @@ class App extends Component {
             that.setState({
                 doc: str
             })
+
+            callbackFn && callbackFn(doc, browser)
 
             for (let attr in global.docReadyFns) {
                 try {

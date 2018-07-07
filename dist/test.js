@@ -1,4 +1,3 @@
 setTimeout(function () {
-
-    document.getElementById('x').innerHTML = 'XXXX'
-}, 1000)
+    document.getElementById('x').innerHTML = '延迟变化'
+}, 200)
