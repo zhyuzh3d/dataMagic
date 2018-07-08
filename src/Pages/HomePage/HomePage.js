@@ -39,7 +39,7 @@ class Page extends Component {
         that.state = {
             title: 'HomePage',
             refpath: "//div[@class='info-primary'][2]",
-            xpath: '//span',
+            xpath: "//div[@class='job-title']",
             //            refpath: '//li[@class="chapter"]',
             //            xpath: '//li[@class="items"][#]//span[2]',
             regx: '',
@@ -115,7 +115,6 @@ class Page extends Component {
             that.state.doc = doc
         }
 
-        console.log('>>>>queryDoc refpath,xpath,doc', refpath, xpath, doc)
         try {
             //如果不指定，那么就返回第一个[1]
             refpath = /\[[0-9]{0,4}\]$/.test(refpath) ? refpath : refpath + '[1]'
@@ -123,6 +122,10 @@ class Page extends Component {
             //尝试获取缓存的dom
             let refNodes = that.state.refNodes[refpath] || XPath.select(refpath, doc)
             that.state.refNodes[refpath] = refNodes
+
+            console.log('>>>>queryDoc select', XPath.select(refpath, doc))
+            //console.log('>>>>queryDoc refpath,xpath,doc', refpath, xpath, refNodes, refNodes[0])
+
             let refdom = that.state.refDoms[refpath] || that.domParser(refNodes[0].toString())
             that.state.refDoms[refpath] = refdom
 
@@ -147,9 +150,10 @@ class Page extends Component {
                     if (v) return v
                 })
             } else {
+
                 var nodes = XPath.select(xpath, refdom)
                 let data = (nodes[0] && nodes[0].firstChild) ? nodes[0].firstChild.data : null
-                value = !usestr ? data : nodes.toString()
+                //value = !usestr ? data : nodes.toString()
                 if (regx) {
                     value = value.match(new RegExp(regx, 'g'))[0]
                 }
@@ -184,7 +188,7 @@ class Page extends Component {
                 refnodes = XPath.select(refpath, doc)
                 that.state.refNodes[refpath] = refnodes
                 that.setState({
-                    refNodes: that.state.nodes || {}
+                    refNodes: that.state.refNodes || {}
                 })
             } catch (err) {
                 console.log('>GetCount:ERR:', err.message)
