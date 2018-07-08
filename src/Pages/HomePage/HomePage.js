@@ -131,7 +131,7 @@ class Page extends Component {
             }
 
             let refdomstr = refNodes[0].toString()
-            if (refNodes.constructor == Array) {
+            if (refNodes && refNodes.constructor == Array) {
                 refdomstr = refNodes[refindex] ? refNodes[refindex].toString() : refdomstr
             }
 
@@ -283,6 +283,8 @@ class Page extends Component {
             xdata[refpath] = []
             let obj = xobj[refpath]
             let count = that.getCount(refpath) //使用重新计算的count数量
+            let objStrs = [] //一个json字符串化的数组，用于检测重复对象
+
             for (let n = 0; n < count + 1; n++) { //兼容数组0开始和xpath的1开始情况
                 let data = {}
                 for (let attr in obj) {
@@ -291,7 +293,7 @@ class Page extends Component {
                         let regx = obj[attr].regx
                         let newrefpath = refpath.replace(/\[#[0-9]{0,4}\]$/, '')
                         let query = that.queryDoc(newrefpath + '[#' + n + ']', xpath || '', regx || '', true)
-                        if (query.constructor == Array) {
+                        if (query && query.constructor == Array) {
                             query.forEach((n, v) => {
                                 data[String(v)] = n
                             })
@@ -300,10 +302,16 @@ class Page extends Component {
                         }
                     }
                 }
-                if (JSON.stringify(data) != "{}") xdata[refpath].push(data)
+                //重复对象或者空对象不添加
+                let dataStr = JSON.stringify(data)
+                if (dataStr != "{}" && objStrs.indexOf(dataStr) == -1) {
+                    xdata[refpath].push(data)
+                    objStrs.push(dataStr)
+                }
             }
-            if (xdata[refpath].length == 0) delete xdata[refpath]
+            if (xdata[refpath].length == 0) delete xdata[refpath] //删除空对象
         }
+
         that.setState({
             xdata: xdata
         })
