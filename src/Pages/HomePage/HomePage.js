@@ -110,6 +110,8 @@ class Page extends Component {
         if (!doc) {
             doc = that.domParser(domstr)
             that.state.doc = doc
+
+            console.log('>>redoc--------')
         }
 
         try {
@@ -119,13 +121,16 @@ class Page extends Component {
             let refbase = refpathobj.base
 
             //尝试获取缓存的dom
-            let select = XPath.select(refpath, doc)
-            let usebase = false
-            if (!select || select.length < 1) {
-                select = XPath.select(refbase, doc)
+            let refNodes = that.state.refNodes[refpath]
+            if (!refNodes) {
+                let select = XPath.select(refpath, doc)
+                let usebase = false
+                if (!select || select.length < 1) {
+                    select = XPath.select(refbase, doc)
+                }
+                refNodes = select
+                that.state.refNodes[refpath] = refNodes
             }
-            let refNodes = that.state.refNodes[refpath] || select
-            that.state.refNodes[refpath] = refNodes
 
             let refdomstr = refNodes[0].toString()
             if (refNodes.constructor == Array) {
