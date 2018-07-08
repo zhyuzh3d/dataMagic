@@ -38,8 +38,8 @@ class Page extends Component {
         let that = this
         that.state = {
             title: 'HomePage',
-            refpath: '//head',
-            xpath: '//title',
+            refpath: "//div[@class='info-primary'][2]",
+            xpath: '//span',
             //            refpath: '//li[@class="chapter"]',
             //            xpath: '//li[@class="items"][#]//span[2]',
             regx: '',
@@ -102,6 +102,7 @@ class Page extends Component {
         let value = 'Not found.'
         let domstr = that.props.app.state.doc
 
+
         if (!domstr) {
             console.log('>QueryDoc:Err:domstr in empty.')
             return value
@@ -135,7 +136,6 @@ class Page extends Component {
                 let itemNode = XPath.select(xpathArr[0], refdom)
                 value = itemNode.map((sub, n) => {
                     let subDom = that.domParser(itemNode[n].toString())
-                    console.log('>>n', n, subDom.toString())
                     let node = XPath.select(xpathArr[1], subDom)
                     let d = (node[0] && node[0].firstChild) ? node[0].firstChild.data : null
                     let v = !usestr ? d : node.toString()

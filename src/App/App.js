@@ -36,7 +36,8 @@ class App extends Component {
         this.state = {
             currentPageName: 'HomePage',
             randNumber: Math.random(),
-            url: 'http://localhost:9000/test.html',
+//            url: 'http://localhost:9000/test.html',
+            url: 'https://www.zhipin.com/c101190400-p100101/',
             doc: null
         }
     }
