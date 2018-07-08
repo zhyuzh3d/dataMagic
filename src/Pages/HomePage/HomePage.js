@@ -115,7 +115,7 @@ class Page extends Component {
 
         try {
             //如果不指定，那么就返回第一个[1]
-            refpath = /\[[0-9]\]$/.test(refpath) ? refpath : refpath + '[1]'
+            refpath = /\[[0-9]{0,4}\]$/.test(refpath) ? refpath : refpath + '[1]'
 
             //尝试获取缓存的dom
             let refNodes = that.state.refNodes[refpath] || XPath.select(refpath, doc)
@@ -175,6 +175,7 @@ class Page extends Component {
             doc = that.domParser(that.props.app.state.doc)
         }
 
+        refpath = refpath.replace(/\[[0-9]{0,4}\]$/, '') //去除结尾的[1]限制
         let refnodes = that.state.refNodes[refpath]
         if (!refnodes) {
             try {
