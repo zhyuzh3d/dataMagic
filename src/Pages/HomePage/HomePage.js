@@ -14,6 +14,8 @@ import {
     withStyles
 } from 'material-ui/styles'
 import PropTypes from 'prop-types'
+import He from 'he'
+
 //import $ from 'jquery'
 import {
     DOMParser
@@ -294,11 +296,11 @@ class Page extends Component {
                         let newrefpath = refpath.replace(/\[#[0-9]{0,4}\]$/, '')
                         let query = that.queryDoc(newrefpath + '[#' + n + ']', xpath || '', regx || '', true)
                         if (query && query.constructor == Array) {
-                            query.forEach((n, v) => {
-                                data[String(v)] = n
+                            query.forEach((val, n) => {
+                                data[String(n)] = He.decode(val)
                             })
                         } else {
-                            data[attr] = query
+                            data[attr] = He.decode(query)
                         }
                     }
                 }
@@ -317,6 +319,7 @@ class Page extends Component {
         })
         xdata && that.genCSVUrl(xdata[that.state.iptRefPath])
     }
+
 
     showDevTool() {
         try {
@@ -623,7 +626,7 @@ class Page extends Component {
                 className: css.button,
                 variant: 'raised',
                 size: 'small',
-                color: 'default',
+                color: 'primary',
                 onClick: () => {
                     that.queryDoc()
                     that.getData()
@@ -656,7 +659,7 @@ class Page extends Component {
                 className: css.button,
                 variant: 'raised',
                 size: 'small',
-                color: 'secondary',
+                color: 'primary',
                 onClick: () => {
                     that.regenDoc()
                 }
