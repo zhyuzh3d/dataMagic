@@ -38,9 +38,12 @@ class Page extends Component {
         let that = this
         that.state = {
             title: 'HomePage',
-            refpath: "//div[@class='info-primary'][2]",
-            xpath: "//div[@class='job-title']",
-            //            refpath: '//li[@class="chapter"]',
+            //            iptRefPath:"//div[@class='job-primary'][2]",
+            //            iptRefPath:"//div[@class='job-list']/ul/li[1][#11]",
+            iptRefPath: "//li[@class='chapter'][#1]",
+            //            xpath: "//div[@class='job-title']",
+            xpath: "//title",
+            //            iptRefPath:'//li[@class="chapter"]',
             //            xpath: '//li[@class="items"][#]//span[2]',
             regx: '',
             xobj: {},
@@ -66,8 +69,7 @@ class Page extends Component {
             that.setState({
                 doc: that.domParser(that.props.app.state.doc)
             }, () => {
-                //that.setTitle()
-                that.queryDoc()
+                that.setTitle()
             })
         }
     }
@@ -95,9 +97,9 @@ class Page extends Component {
     }
 
     //根据xpath查询数据,三个参数严格使用undefined指向that.state
-    queryDoc(refstr, xstr, regxstr, notset) {
+    queryDoc(iptrefstr, xstr, regxstr, notset) {
         let that = this
-        let refpath = refstr !== undefined ? refstr : that.state.refpath
+        let iptRefPath = iptrefstr !== undefined ? iptrefstr : that.state.iptRefPath
         let xpath = xstr !== undefined ? xstr : that.state.xpath
         let regx = regxstr !== undefined ? regxstr : that.state.regx
         let value = 'Not found.'
@@ -116,15 +118,11 @@ class Page extends Component {
         }
 
         try {
-            //如果不指定，那么就返回第一个[1]
-            refpath = /\[[0-9]{0,4}\]$/.test(refpath) ? refpath : refpath + '[1]'
+            let refpath = that.getRealRefPath(iptRefPath)
 
             //尝试获取缓存的dom
             let refNodes = that.state.refNodes[refpath] || XPath.select(refpath, doc)
             that.state.refNodes[refpath] = refNodes
-
-            console.log('>>>>queryDoc select', XPath.select(refpath, doc))
-            //console.log('>>>>queryDoc refpath,xpath,doc', refpath, xpath, refNodes, refNodes[0])
 
             let refdom = that.state.refDoms[refpath] || that.domParser(refNodes[0].toString())
             that.state.refDoms[refpath] = refdom
@@ -150,10 +148,9 @@ class Page extends Component {
                     if (v) return v
                 })
             } else {
-
                 var nodes = XPath.select(xpath, refdom)
                 let data = (nodes[0] && nodes[0].firstChild) ? nodes[0].firstChild.data : null
-                //value = !usestr ? data : nodes.toString()
+                value = !usestr ? data : nodes.toString()
                 if (regx) {
                     value = value.match(new RegExp(regx, 'g'))[0]
                 }
@@ -165,14 +162,31 @@ class Page extends Component {
         if (!notset) {
             that.setState({
                 queryValue: value,
-                refcount: that.getCount(refpath, doc)
+                refcount: that.getCount(iptRefPath, doc)
             })
         }
         return value
     }
 
+
+    //如果带有[#N]那么改为[N],不带则添加[1]
+    getRealRefPath(iptRefPath) {
+        let that = this
+        let refpath = iptRefPath || that.state.iptRefPath
+        //匹配做循环用的[#n],如果不指定，那么就返回第一个[1]
+        let nstr = refpath.match(/\[#[0-9]{1,4}]$/)
+        if (nstr && nstr[0]) {
+            let n = nstr[0] ? nstr[0].replace(/[\[\]#]/g, '') : 0
+            refpath = refpath.replace(/\[#[0-9]{1,4}]$/, '')
+            refpath += '[' + n + ']'
+        } else {
+            refpath += '[' + 1 + ']'
+        }
+        return refpath
+    }
+
     //获取count数量
-    getCount(refpath, doc) {
+    getCount(iptRefPath, doc) {
         let that = this
         if (!doc) {
             doc = that.state.doc
@@ -181,7 +195,7 @@ class Page extends Component {
             doc = that.domParser(that.props.app.state.doc)
         }
 
-        refpath = refpath.replace(/\[[0-9]{0,4}\]$/, '') //去除结尾的[1]限制
+        let refpath = iptRefPath.replace(/\[#[0-9]{1,4}]$/, '') //直接裁减掉[#N]
         let refnodes = that.state.refNodes[refpath]
         if (!refnodes) {
             try {
@@ -205,7 +219,7 @@ class Page extends Component {
     //向对象里面添加一个字段
     addKey() {
         let that = this
-        let refpath = that.state.refpath || 'undefined'
+        let refpath = that.state.iptRefPath || 'undefined'
         if (!that.state.xobj[refpath]) that.state.xobj[refpath] = {}
         that.state.xobj[refpath]['count'] = that.state.refcount
         that.state.xobj[refpath][that.state.key] = {
@@ -226,7 +240,7 @@ class Page extends Component {
     delKey() {
         let that = this
         let newxobj = that.state.xobj
-        let objkey = that.state.refpath || 'undefined'
+        let objkey = that.state.iptRefPath || 'undefined'
         let obj = newxobj[objkey]
         delete obj[that.state.key]
         newxobj[objkey] = obj
@@ -260,7 +274,8 @@ class Page extends Component {
                     if (attr != 'count') {
                         let xpath = obj[attr].xpath
                         let regx = obj[attr].regx
-                        let query = that.queryDoc(refpath + '[' + n + ']', xpath || '', regx || '', true)
+                        let newrefpath = refpath.replace(/\[#[0-9]{0,4}\]$/, '')
+                        let query = that.queryDoc(newrefpath + '[#' + n + ']', xpath || '', regx || '', true)
                         if (query.constructor == Array) {
                             query.forEach((n, v) => {
                                 data[String(v)] = n
@@ -277,7 +292,7 @@ class Page extends Component {
         that.setState({
             xdata: xdata
         })
-        xdata && that.genCSVUrl(xdata[that.state.refpath])
+        xdata && that.genCSVUrl(xdata[that.state.iptRefPath])
     }
 
     showDevTool() {
@@ -373,7 +388,7 @@ class Page extends Component {
         }
         that.setState({
             xobj: xobj ? xobj : that.state.xobj,
-            refpath: refpath ? refpath : that.state.refpath,
+            iptRefPath: refpath ? refpath : that.state.iptRefPath,
             xpath: xpath ? xpath : that.state.xpath
         }, () => {
             that.queryDoc()
@@ -386,7 +401,7 @@ class Page extends Component {
         let that = this
         that.setState({
             xobj: {},
-            refpath: '//head',
+            iptRefPath: '//head',
             xpath: '//title',
             nodes: {},
             doc: null,
@@ -433,10 +448,10 @@ class Page extends Component {
             }, '单元路径: '),
                 h(TextField, {
                 className: css.rowContent,
-                value: that.state.refpath,
+                value: that.state.iptRefPath,
                 onChange: (evt) => {
                     that.setState({
-                        refpath: evt.target.value,
+                        iptRefPath: evt.target.value,
                         value: that.queryDoc(evt.target.value, undefined, undefined)
                     })
                 }
