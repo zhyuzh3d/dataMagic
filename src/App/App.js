@@ -111,7 +111,7 @@ class App extends Component {
         }, [
            h('div', {
                 style: {
-                    minWidth: 360,
+                    minWidth: 400,
                     width: '20%',
                     height: '100%',
                     borderRight: '1px solid #AAA',
