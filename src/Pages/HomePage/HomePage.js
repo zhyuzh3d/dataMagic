@@ -63,26 +63,27 @@ class Page extends Component {
     componentDidMount() {
         let that = this
         global.docReadyFns['setTitle'] = (domstr) => {
-            that.setTitle()
+            that.setState({
+                doc: that.domParser(that.props.app.state.doc)
+            }, () => {
+                //that.setTitle()
+                that.queryDoc()
+            })
         }
     }
 
     setTitle() {
         let that = this
-        that.setState({
-            doc: that.domParser(that.props.app.state.doc)
-        }, () => {
-            that.queryDoc()
-            var doc = that.domParser(that.props.app.state.doc)
-            let title = that.queryDoc('//head', '//title', '', true)
-            if (title) {
-                that.setState({
-                    rulesFile: title + '.mdr',
-                    csvFile: title + '.csv'
-                })
-            }
-            console.log('>Query:Doc title is ' + (title ? title : 'not found') + '.')
-        })
+        that.queryDoc()
+        var doc = that.domParser(that.props.app.state.doc)
+        let title = that.queryDoc('//head', '//title', '', true)
+        if (title) {
+            that.setState({
+                rulesFile: title + '.mdr',
+                csvFile: title + '.csv'
+            })
+        }
+        console.log('>Query:Doc title is ' + (title ? title : 'not found') + '.')
     }
 
     domParser(str) {
@@ -114,6 +115,7 @@ class Page extends Component {
             that.state.doc = doc
         }
 
+        console.log('>>>>queryDoc refpath,xpath,doc', refpath, xpath, doc)
         try {
             //如果不指定，那么就返回第一个[1]
             refpath = /\[[0-9]{0,4}\]$/.test(refpath) ? refpath : refpath + '[1]'
