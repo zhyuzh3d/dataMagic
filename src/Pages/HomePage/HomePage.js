@@ -110,8 +110,6 @@ class Page extends Component {
         if (!doc) {
             doc = that.domParser(domstr)
             that.state.doc = doc
-
-            console.log('>>redoc--------')
         }
 
         try {
