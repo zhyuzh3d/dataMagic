@@ -283,7 +283,7 @@ class Page extends Component {
             xdata[refpath] = []
             let obj = xobj[refpath]
             let count = that.getCount(refpath) //使用重新计算的count数量
-            for (let n = 1; n < count + 1; n++) {
+            for (let n = 0; n < count + 1; n++) { //兼容数组0开始和xpath的1开始情况
                 let data = {}
                 for (let attr in obj) {
                     if (attr != 'count') {
@@ -652,7 +652,7 @@ class Page extends Component {
                 onClick: () => {
                     that.regenDoc()
                 }
-            }, '分析页面'),
+            }, '分析'),
             h(Button, {
                 className: css.button,
                 variant: 'raised',
