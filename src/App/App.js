@@ -26,8 +26,7 @@ import Toolbar from '../Units/Toolbar'
 global.XRouter = XRouter //输出到全局
 global.docReadyFns = {
     'sample': (doc) => {
-        console.log('>DocReadyFn:sample:----------')
-        //        console.log('>DocReadyFn:sample:Doc title is ' + $(doc).find('head title').html())
+        console.log('>DocReadyFn:sample:Doc title is ' + $(doc).find('head title').html())
     }
 }
 
@@ -39,6 +38,7 @@ class App extends Component {
             randNumber: Math.random(),
             url: 'http://localhost:9000/test.html',
             //            url: 'https://www.zhipin.com/c101190400-p100101/',
+            //            url: 'https://study.163.com/course/introduction.htm?courseId=1003599014&share=1&shareId=1142274227#/courseDetail?tab=1',
             doc: null
         }
     }

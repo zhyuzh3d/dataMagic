@@ -38,13 +38,8 @@ class Page extends Component {
         let that = this
         that.state = {
             title: 'HomePage',
-            //            iptRefPath:"//div[@class='job-primary'][2]",
-            //            iptRefPath:"//div[@class='job-list']/ul/li[1][#11]",
-            iptRefPath: "//li[@class='chapter'][#1]",
-            //            xpath: "//div[@class='job-title']",
+            iptRefPath: "//head",
             xpath: "//title",
-            //            iptRefPath:'//li[@class="chapter"]',
-            //            xpath: '//li[@class="items"][#]//span[2]',
             regx: '',
             xobj: {},
             key: 'name',
@@ -118,14 +113,26 @@ class Page extends Component {
         }
 
         try {
-            let refpath = that.getRealRefPath(iptRefPath)
+            let refpathobj = that.getRealRefPath(iptRefPath)
+            let refpath = refpathobj.path
+            let refindex = refpathobj.index
+            let refbase = refpathobj.base
 
             //尝试获取缓存的dom
-            let refNodes = that.state.refNodes[refpath] || XPath.select(refpath, doc)
+            let select = XPath.select(refpath, doc)
+            let usebase = false
+            if (!select || select.length < 1) {
+                select = XPath.select(refbase, doc)
+            }
+            let refNodes = that.state.refNodes[refpath] || select
             that.state.refNodes[refpath] = refNodes
 
-            let refdom = that.state.refDoms[refpath] || that.domParser(refNodes[0].toString())
-            that.state.refDoms[refpath] = refdom
+            let refdomstr = refNodes[0].toString()
+            if (refNodes.constructor == Array) {
+                refdomstr = refNodes[refindex] ? refNodes[refindex].toString() : refdomstr
+            }
+
+            let refdom = that.state.refDoms[refpath] || that.domParser(refdomstr)
 
             //斜杠结尾使用string，否则使用data
             let usestr = xpath[xpath.length - 1] == '/'
@@ -173,16 +180,21 @@ class Page extends Component {
     getRealRefPath(iptRefPath) {
         let that = this
         let refpath = iptRefPath || that.state.iptRefPath
+        let n = 1
+        let base = refpath
         //匹配做循环用的[#n],如果不指定，那么就返回第一个[1]
         let nstr = refpath.match(/\[#[0-9]{1,4}]$/)
         if (nstr && nstr[0]) {
-            let n = nstr[0] ? nstr[0].replace(/[\[\]#]/g, '') : 0
+            n = nstr[0] ? nstr[0].replace(/[\[\]#]/g, '') : 0
             refpath = refpath.replace(/\[#[0-9]{1,4}]$/, '')
-            refpath += '[' + n + ']'
-        } else {
-            refpath += '[' + 1 + ']'
+            base = refpath
         }
-        return refpath
+        refpath += '[' + n + ']'
+        return {
+            path: refpath,
+            index: n,
+            base: base
+        }
     }
 
     //获取count数量
