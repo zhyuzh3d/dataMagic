@@ -71,6 +71,22 @@ class Page extends Component {
         }
     }
 
+
+
+    //补零
+    pad(str, n) {
+        if (!/^[0-9]*$/.test(str)) return str
+        let res = str
+        let count = n - str.length
+        if (count > 0) {
+            let padding = Array(count + 1).join(0)
+            console.log('>>padding', padding, n, str.length, count)
+            res = padding + res
+        }
+        return res
+    }
+
+
     setTitle() {
         let that = this
         that.queryDoc()
@@ -92,6 +108,7 @@ class Page extends Component {
             return null
         }
     }
+
 
     //根据xpath查询数据,三个参数严格使用undefined指向that.state
     queryDoc(iptrefstr, xstr, regxstr, notset) {
@@ -297,7 +314,8 @@ class Page extends Component {
                         let query = that.queryDoc(newrefpath + '[#' + n + ']', xpath || '', regx || '', true)
                         if (query && query.constructor == Array) {
                             query.forEach((val, n) => {
-                                data[String(n)] = val ? He.decode(val) : val
+                                let k = that.pad(String(n), 3)
+                                data[k] = val ? He.decode(val) : val
                             })
                         } else {
                             data[attr] = query ? He.decode(query) : query
@@ -342,6 +360,8 @@ class Page extends Component {
 
         data.forEach((item, n) => {
             for (let attr in item) {
+
+
                 if (!filedsObj[attr]) {
                     fields.push({
                         name: attr,
