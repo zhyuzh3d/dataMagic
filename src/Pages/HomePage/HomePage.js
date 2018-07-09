@@ -155,7 +155,7 @@ class Page extends Component {
                     let d = (node[0] && node[0].firstChild) ? node[0].firstChild.data : null
                     let v = !usestr ? d : node.toString()
                     if (regx) {
-                        v = v.match(new RegExp(regx, 'g'))[0]
+                        v = v.replace(new RegExp(regx, 'g'), '')
                     }
                     if (v) return v
                 })
@@ -164,7 +164,7 @@ class Page extends Component {
                 let data = (nodes[0] && nodes[0].firstChild) ? nodes[0].firstChild.data : null
                 value = !usestr ? data : nodes.toString()
                 if (regx) {
-                    value = value.match(new RegExp(regx, 'g'))[0]
+                    value = value.replace(new RegExp(regx, 'g'), '')
                 }
             }
         } catch (err) {
@@ -297,10 +297,10 @@ class Page extends Component {
                         let query = that.queryDoc(newrefpath + '[#' + n + ']', xpath || '', regx || '', true)
                         if (query && query.constructor == Array) {
                             query.forEach((val, n) => {
-                                data[String(n)] = He.decode(val)
+                                data[String(n)] = val ? He.decode(val) : val
                             })
                         } else {
-                            data[attr] = He.decode(query)
+                            data[attr] = query ? He.decode(query) : query
                         }
                     }
                 }
@@ -337,13 +337,28 @@ class Page extends Component {
             console.log('>SaveCSV:ERR', 'Nothing to save.')
             return
         }
+        let filedsObj = {}
         let fields = []
-        for (let attr in data[0]) {
-            fields.push({
-                name: attr,
-                label: attr,
-            })
-        }
+
+        data.forEach((item, n) => {
+            for (let attr in item) {
+                if (!filedsObj[attr]) {
+                    fields.push({
+                        name: attr,
+                        label: attr,
+                    })
+                    filedsObj[attr] = true
+                }
+            }
+        })
+
+        fields.sort((a, b) => {
+            let arr = [a.name, b.name]
+            arr.sort()
+            return arr.indexOf(a.name) - arr.indexOf(b.name)
+        })
+
+
         Jsoncsv.csvBuffered(data, {
             fields: fields
         }, (err, csv) => {
