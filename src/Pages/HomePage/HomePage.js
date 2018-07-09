@@ -582,6 +582,9 @@ class Page extends Component {
             }, that.state.refcount)
         ])
 
+        let randKey = that.state.xpath.indexOf('[#]') == -1 ? that.state.key : '__' + Math.random()
+
+
         let keyRow = h('div', {
             className: css.valueRow
         }, [
@@ -593,7 +596,7 @@ class Page extends Component {
             }, '字段名称: '),
                 h(TextField, {
                 className: css.rowContent,
-                value: that.state.key,
+                value: randKey,
                 onChange: (evt) => {
                     that.setState({
                         key: evt.target.value
