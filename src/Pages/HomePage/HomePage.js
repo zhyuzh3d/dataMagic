@@ -80,7 +80,6 @@ class Page extends Component {
         let count = n - str.length
         if (count > 0) {
             let padding = Array(count + 1).join(0)
-            console.log('>>padding', padding, n, str.length, count)
             res = padding + res
         }
         return res
